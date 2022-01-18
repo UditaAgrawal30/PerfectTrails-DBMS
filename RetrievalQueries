@@ -1,0 +1,66 @@
+use perfect_trails;
+
+# Query 1: Find the ID and Names along with Order ID of the users who have ordered Clothing with the highest price
+# this will return all orders having mer020 
+
+select u.user_id, u.First_Name,u.Last_Name,o.order_id 
+from users as u 
+inner join orders as o on u.user_id= o.user_id
+inner join orderdetails as od on od.order_id = o.order_id
+inner join merchandise as m on m.id = od.product_id 
+where m.description = 'clothing' and m.cost >= all (select cost from merchandise);
+
+# Query 2: Find  Username, User ID, Order ID, and Total cost of the top 2 orders having maximum cost which are delivered
+
+select u.user_id,u.First_name,o.order_id,o.total_cost 
+from users as u
+inner join orders as o 
+ON o.user_id = u.user_id
+where o.status = 'Delivered' 
+order by total_cost DESC limit 2;
+
+#  Query 3: Return all the trails that have above average rating
+select * from trails
+where trail_id in 
+(select trail_id From rate
+where rating > (select avg(rating) from rate));
+
+#Query 4: Find the Name, Id of the trails which has been booked for maximum total number of people
+
+select t.trail_id, t.trail_name, sum(b.no_of_people) as total_people
+from trails as t inner join book as b 
+on b.trail_id=t.trail_id 
+group by t.trail_id
+order by total_people desc limit 1;
+
+#Query5: Find the Trail Id, Trail Name and Elevation Gain of Trails which are Dog Friendly during summer season ordered by decreasing elevation gain
+select t.trail_id, t.trail_name, h.elevation_gain 
+from trails as t inner join accessibility as a
+on a.trail_id= t.trail_id 
+inner join season as s on s.trail_id= t.trail_id
+inner join hiking as h on h.trail_id= t.trail_id
+where t.route_type= 'loop' and a.criteria= 'Dog Friendly' and s.season_name='Summer'
+order by h.elevation_gain desc;
+
+#Query 6: Find all the private profile names, user_id which follow public profile with the name = ‘deglese0’.
+select  p.profile_name as PrivateProfile ,p.user_id 
+from private_profile as p
+inner join follow as f on f.follower_user_id=p.user_id
+where f.profile_name= 'deglese0';
+
+#Query 7: Find the names, id and the registered Plan ID, of all the users having ‘life’ in their status.
+select u.user_id, u.first_name, u.last_name, e.plan_id
+from users as u
+inner join explorer as e on e.user_id=u.user_id 
+inner join user_profile as up on up.user_id=u.user_id
+where up.profile_status like '%life%';
+
+#Query 8: Find user details of guide who has been booked for maximum number of times
+select users.user_id, guide.guide_id, users.first_name, users.last_name
+from users join guide on users.user_id=guide.user_id
+where guide_id= (select guide_id from book
+group by guide_id
+having count(*)= (select max(total)
+from ( select guide_id, count(*) as total
+from book group by guide_id)as g)); 
+
