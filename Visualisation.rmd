@@ -1,0 +1,94 @@
+```{r}
+#connecting with Perfect_Trails DB in MySQL
+library(RMySQL)
+library(dplyr)   
+library(lubridate)
+library(ggplot2)
+perfect_trails <- dbConnect(MySQL(),	 user='root',	 password='',	
+                     dbname='perfect_Trails', host='127.0.0.1')
+
+
+```
+
+```{r}
+#Plot1 : No of Trails per Season
+
+dbListFields(perfect_trails,"season")
+df <- dbSendQuery(perfect_trails, "select season_name, count(distinct trail_id)as count 
+                         from season
+                         group by Season_name")
+season_df <- dbFetch(df)
+ggplot(season_df, aes(x=season_name, y=count, fill=count)) +
+  geom_bar(stat="identity")+
+  theme_minimal()+
+  geom_text(aes(label=count), vjust=1.6, color="white", size=3.5)+
+  ggtitle("Plot of Number of Trails vs Season") +
+  xlab("Season") + ylab("Number of Trails")
+
+#stats about trails 
+```
+
+```{r}
+#Plot1 : No of Trails per Accessibility Criteria
+
+dbListFields(perfect_trails,"accessibility")
+df <- dbSendQuery(perfect_trails, "select criteria, count(distinct trail_id)as count 
+                         from accessibility
+                         group by criteria")
+criteria_df <- dbFetch(df)
+ggplot(criteria_df, aes(x=criteria, y=count, fill=count)) +
+  geom_bar(stat="identity")+
+  theme_minimal()+
+  geom_text(aes(label=count), vjust=1.6, color="white", size=3.5)+
+  ggtitle("Plot of Number of Trails vs Accessibility Criteria") +
+  xlab("Criteria") + ylab("Number of Trails")
+
+# user friendliness statistics
+```
+
+```{r}
+#Plot 3: Time series of No of orders per month
+
+rs <-  dbSendQuery(perfect_trails, "select * from orders")
+orders <- fetch(rs, n=-1)
+Dateformat <- as.Date(orders$date_time, format = "%Y-%m-%d")    # Convert character to Date
+x_month <- format(Dateformat, "%m")
+X_monthInt <- as.integer(x_month)
+x_monthname<- month.name[X_monthInt]
+orders$months <- x_monthname
+orders_df <- orders %>% 
+select(order_id, months) %>%
+group_by(months) %>% tally() %>%
+  collect()
+ggplot(data=orders_df, aes(x=months, y=n, group=1)) +
+  geom_line(color="blue")+
+  geom_point()+
+  ggtitle("Plot of No of Orders per Month in Year 2021") +
+  xlab("Months in Year 2021") + ylab("OrderCount")
+
+# forecasting, inventory management of merchandise
+
+```
+
+```{r}
+#Plot 4 : Percentage of subscribers per plan 
+
+dbListFields(perfect_trails,"explorer")
+df <- dbSendQuery(perfect_trails, "select plan_id, count(distinct user_id)as count 
+                         from explorer
+                         group by plan_id")
+plan_df <- dbFetch(df)
+
+df1 <- dbSendQuery(perfect_trails, "select count(distinct user_id) as total
+                   from explorer")
+total_df <- dbFetch(df1)
+ggplot(plan_df, aes(x=plan_id, y=count/total_df$total, fill=count/total_df$total)) +
+  geom_bar(stat="identity")+
+  theme_minimal()+
+  geom_text(aes(label=count/total_df$total), vjust=1.6, color="white", size=3.5)+
+  ggtitle("Plot of Percentage of Users per Plan") +
+  xlab("Plans IDs") + ylab("Percentage of Users") + labs(fill= "Percentage")
+
+#targeted marketing strategy based on user purchase power
+
+```
