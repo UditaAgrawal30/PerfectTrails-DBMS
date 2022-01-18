@@ -1,0 +1,217 @@
+create database perfect_trails;
+
+use perfect_trails;
+
+create table users
+	( user_id  char(8) NOT NULL PRIMARY KEY DEFAULT "UNDEF00",
+    first_name varchar(15) NOT NULL,
+    last_name varchar(15),
+    email varchar(255) NOT NULL,
+    gender char(1),
+		CONSTRAINT G CHECK(gender IN ('M', 'F', 'O')),
+    date_of_birth date NOT NULL,
+    age int(3),
+    city varchar(20)
+    );
+    
+CREATE TABLE phone_no (
+    user_id CHAR(8) NOT NULL,
+    phone_no VARCHAR(15) NOT NULL,
+    PRIMARY KEY (user_id , phone_no),
+    FOREIGN KEY (user_id)
+        REFERENCES users (user_id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+create table plans
+( plan_id char(6) NOT NULL PRIMARY KEY DEFAULT "PLAN01",
+cost numeric(4,2) DEFAULT 0.0
+);
+
+create table explorer
+(user_id char(8) NOT NULL,
+plan_id char(6) NOT NULL DEFAULT "PLAN01",
+primary key (user_id, plan_id), 
+foreign key (user_id) references users (user_id)
+	on delete cascade on update cascade,
+foreign key (plan_id) references plans (plan_id)
+	on delete set default /* Check this condition*/
+);
+
+
+create table merchandise
+( id char(8) NOT NULL PRIMARY KEY,
+name varchar(50) NOT NULL,
+description varchar(255),
+cost numeric(5,2)
+);
+
+create table orders
+(order_id char(6) NOT NULL PRIMARY KEY,
+total_cost numeric(6,2) NOT NULL,
+status varchar(15),
+	CONSTRAINT S CHECK(status IN('Processing','Cancelled', 'Delivered', 'Shipped')),
+delivery_address varchar(255) NOT NULL,
+date_time datetime NOT NULL,
+user_id char(8) NOT NULL,
+foreign key (user_id) references users (user_id)
+);
+
+create table orderdetails
+( order_id char(6) NOT NULL,
+product_id char(8) NOT NULL, 
+quantity int NOT NULL,
+primary key(order_id, product_id),
+foreign key (order_id) references orders(order_id)
+on update cascade,
+foreign key (product_id) references merchandise (id)
+on update cascade
+);
+
+
+
+
+create table guide
+( guide_id char(8) NOT NULL PRIMARY KEY,
+user_id char(8) NOT NULL,
+foreign key (user_id) references users (user_id)
+on delete cascade on update cascade
+);
+
+create table can_guide
+( guide_id char(8) NOT NULL,
+trail_id char(8) NOT NULL,
+start_time time,
+end_time time,
+date date,
+price numeric(5,2),
+primary key(guide_id, trail_id, date),
+foreign key (guide_id) references guide (guide_id)
+	on update cascade,
+foreign key (trail_id) references trails (trail_id)
+	on update cascade
+);
+
+create table Trails
+	( Trail_id  char(8) NOT NULL PRIMARY KEY,
+    Route_Type varchar(50),
+    Trail_Length numeric(4,2),
+    Trail_Name varchar(50),
+    Duration time,
+    Street_Name varchar(40),
+    Street_No int(5),
+    city varchar(20),
+    Zip_Code int(5),
+    State varchar(40)
+    );
+   
+create table Season
+( Trail_id  char(8) NOT NULL,
+    Season_Name varchar(15) NOT NULL,
+		CONSTRAINT SN CHECK (Season_Name in ('Fall', 'Spring', 'Summer', 'Winter')),
+    primary key (Trail_id, Season_Name),
+    foreign key (Trail_id) references Trails (Trail_id)
+    on delete cascade on update cascade
+    );
+    
+create table Accessibility
+( Trail_id  char(8) NOT NULL,
+    Criteria varchar(20) NOT NULL,
+		CONSTRAINT C CHECK (Criteria in ('Dog Friendly', 'Paved', 'Partially Paved', 'Stroller Friendly' )),
+    primary key (Trail_id, Criteria),
+    foreign key (Trail_id) references Trails (Trail_id)
+    on delete cascade on update cascade
+    );
+    
+create table Hiking
+( Trail_id  char(8) NOT NULL PRIMARY KEY,
+    Elevation_Gain numeric(6,2),
+    foreign key (Trail_id) references Trails (Trail_id)
+    on delete cascade on update cascade
+    );
+    
+create table Fishing
+( Trail_id  char(8) NOT NULL PRIMARY KEY,
+    Fish_Density numeric(10,2),
+    foreign key (Trail_id) references Trails (Trail_id)
+    on delete cascade on update cascade
+    );  
+    
+create table Skiing
+( Trail_id  char(8) NOT NULL PRIMARY KEY,
+    Expertise_Level varchar(15),
+		CONSTRAINT EL CHECK( Expertise_Level IN ('Beginner', 'Intermediate', 'Expert')),
+    foreign key (Trail_id) references Trails (Trail_id)
+    on delete cascade on update cascade
+    );
+    
+create table Book
+( User_ID  char(8) NOT NULL,
+    Guide_ID char(8) NOT NULL,
+    Trail_id char(8) NOT NULL,
+    Booking_ID char(8) NOT NULL PRIMARY KEY,
+    Date_Time datetime,
+    No_of_People int(4),
+    foreign key (User_ID) references Users (User_ID)
+    on update cascade,
+    foreign key (Guide_ID) references Guide (Guide_ID)
+    on update cascade,
+    foreign key (Trail_id) references Trails (Trail_id)
+    on update cascade
+    );
+    
+create table User_Profile
+( Profile_Name  varchar(50) NOT NULL DEFAULT "UPROF00",
+    User_ID char(8) NOT NULL,
+    Profile_Status varchar(255),
+    primary key (User_ID, Profile_Name),
+    foreign key (User_ID) references users (User_ID)
+		on delete cascade on update cascade
+    );
+    
+    
+create table Public_Profile
+    (Profile_Name  varchar(50) NOT NULL,
+    User_ID char(8) NOT NULL,
+    primary key (User_ID, Profile_Name),
+    foreign key (User_ID, Profile_Name) references User_Profile (User_ID, Profile_Name)
+		on update cascade on delete cascade	
+    );
+    
+create table Private_Profile
+    (Profile_Name  varchar(50) NOT NULL,
+    User_ID char(8) NOT NULL,
+    primary key (User_ID, Profile_Name),
+    foreign key (User_ID, Profile_Name) references User_Profile (User_ID, Profile_Name)
+		on update cascade on delete cascade	
+    );
+    
+create table Follow
+    (Profile_Name  varchar(50) NOT NULL,
+    User_ID char(8) NOT NULL,
+    Follower_User_ID char(8),
+    primary key (User_ID, Profile_Name,Follower_User_ID),
+    foreign key (User_ID, Profile_Name) references Public_Profile (User_ID, Profile_Name)
+    on delete cascade on update cascade,
+    foreign key (Follower_User_ID) references Users (User_ID)
+    on delete cascade on update cascade
+    );
+    
+create table Rate
+    (Trail_ID  char(8) NOT NULL,
+    Profile_Name varchar(50) NOT NULL,
+    User_ID char(8) NOT NULL,
+    Rating numeric (2,1),
+    primary key (Trail_ID, Profile_Name, User_ID),
+    foreign key (User_ID, Profile_Name) references User_Profile (User_ID,Profile_Name)
+    on delete set default on update cascade,
+    foreign key (Trail_ID) references Trails (Trail_ID)
+    on delete cascade on update cascade
+    );
+
+
+
+
+
+  
+    
