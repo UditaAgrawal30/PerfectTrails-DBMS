@@ -4,7 +4,8 @@ library(RMySQL)
 library(dplyr)   
 library(lubridate)
 library(ggplot2)
-perfect_trails <- dbConnect(MySQL(),	 user='root',	 password='',	
+password <- rstudioapi::askForPassword("Database password")
+perfect_trails <- dbConnect(MySQL(),	 user='root',	 password='password',	
                      dbname='perfect_Trails', host='127.0.0.1')
 
 
